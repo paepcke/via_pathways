@@ -15,9 +15,15 @@ import os
 import click
 import numpy as np
 
-from data.loader import load_graph, load_matrix
-from analysis.projections import PrereqGraphAnalyzer
-from projection_models.models import *
+import snap
+
+#from data.loader import load_graph, load_matrix
+from via.loader import load_graph, load_matrix
+#from analysis.projections import PrereqGraphAnalyzer
+from via.projections import PrereqGraphAnalyzer
+from via.discount_normalized import DiscountNormalized
+
+from via.projection_models.models import *
 
 def create_bipartite_graph():
     '''
