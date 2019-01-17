@@ -1,33 +1,37 @@
-import multiprocessing
-from setuptools import setup, find_packages
-import os
-import glob
+import setuptools
 
-datafiles = ['src/via_pathways/Data/graph.txt'
-             ]
 
-setup(
-    name = "via_pathways",
-    version = "0.1",
-    packages = find_packages(),
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
-    # Dependencies on other packages:
-    # Couldn't get numpy install to work without
-    # an out-of-band: sudo apt-get install python-dev
-    setup_requires   = [],
-    install_requires = ['click>=7.0',
-                        'pandas>=0.23.4',
-                        'numpy>=1.15.4',
-                        ],
-
-    # Unit tests; they are initiated via 'python setup.py test'
-    test_suite       = 'nose.collector', 
-
-    # metadata for upload to PyPI
-    author = "Geoffrey Lim Angus, Richard Diehl Martinez",
-    author_email = "paepcke@cs.stanford.edu",
-    description = "Deriving course prerequisites from enrollment data..",
-    license = "BSD",
-    keywords = "education",
-    url = "git@github.com:paepcke/via_pathways.git",   # project home page, if any
+setuptools.setup(
+    entry_points={
+        'console_scripts': [
+            'build_dataset=via.run:build_dataset',
+            'build_projection=via.run:build_projection',
+            'run_metrics=via.run:run_metrics',
+            'enrich_projection=via.run:enrich_projection',
+            'run_pagerank=via.run:run_pagerank'
+        ]
+    },
+    name="via",
+    version="0.0.1",
+    author="Geoffrey Angus and Richard Diehl",
+    author_email="gangus@stanford.edu",
+    description="Research software for the Carta Via project",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/geoffreyangus/Via",
+    packages=setuptools.find_packages(include=['via']),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    install_requires=[
+        'networkx',
+        'click',
+        'pandas'
+    ],
+    python_requires='>=3',
 )
