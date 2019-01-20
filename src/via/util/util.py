@@ -9,7 +9,7 @@ class ParamsOperation:
     Superclass for all classes that use params.json files.
     """
     def __init__(self, params_dir):
-        params_path = os.path.join(params_dir, "params.json")
+        params_path = os.path.join(os.path.realpath(params_dir), "params.json")
         with open(params_path) as f:
             params = json.load(f)
             self.__dict__.update(params)
