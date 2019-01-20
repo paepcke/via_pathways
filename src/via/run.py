@@ -1,8 +1,10 @@
 import os
+import sys
 
 import click
 import networkx as nx
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 from via.data.builder import DatasetBuilder
 from via.learn.train import Trainer
 from via.learn.analyze import ProjectionAnalyzer

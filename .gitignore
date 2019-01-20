@@ -111,3 +111,4 @@ data/pathways_datasets/*/*.log
 data/pathways_datasets/*/course_indices.json
 experiments/*/*/*.log
 experiments/*/*/*.txt
+src/via/data/raw/

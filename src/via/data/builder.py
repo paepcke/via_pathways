@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import numpy as np
 
-from via.util.util import ParamsOperation
+from ..util.util import ParamsOperation
 
 
 class DatasetBuilder(ParamsOperation):

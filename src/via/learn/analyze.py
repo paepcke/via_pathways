@@ -7,7 +7,7 @@ import networkx as nx
 from networkx.algorithms.community.quality import modularity as nx_modularity
 from networkx.algorithms.cluster import clustering
 
-from via.util.util import ParamsOperation, get_prefix
+from ..util.util import ParamsOperation, get_prefix
 
 
 class ProjectionAnalyzer(ParamsOperation):
