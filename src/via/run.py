@@ -10,24 +10,63 @@ from via.learn.train import Trainer
 from via.learn.analyze import ProjectionAnalyzer
 from via.util.util import enrich_projection_txt
 
-@click.command()
-@click.argument('params_dir')
+from via.constants import PROJ_ROOT
+
+#************
+#@click.command()
+#@click.argument('params_dir')
+#************
 def build_dataset(params_dir):
-    process = DatasetBuilder(params_dir)
+    '''
+    Generate the student x course enrollment table: one row per
+    student, one column per course. Matrix values reflect the 
+    quarter when student Si took course Cj
+    
+    Example paths:
+        $HOME/rest-of-path                 : Env vars are resolved
+        data/pathways_datasets/examples/CS : Relative to project root 
+    
+    @param params_dir: absolute or relative path to directory containing params.json
+    @type params_dir: str
+    '''
+    process = DatasetBuilder(params_dir, proj_root=PROJ_ROOT)
     process.run()
 
-
-@click.command()
-@click.argument('params_dir')
+#***********
+#@click.command()
+#@click.argument('params_dir')
+#***********
 def build_projection(params_dir):
-    process = Trainer(params_dir)
+    '''
+    Generate the sequence matrix dataset: course x course
+    Cell values contain 
+    
+    Example paths:
+        $HOME/rest-of-path                 : Env vars are resolved
+        data/pathways_datasets/examples/CS : Relative to project root 
+    
+    @param params_dir: absolute or relative path to directory containing params.json
+    @type params_dir: str
+    '''
+    
+    process = Trainer(params_dir, proj_root=PROJ_ROOT)
     process.run()
 
 
 @click.command()
 @click.argument('params_dir')
 def run_metrics(params_dir):
-    process = ProjectionAnalyzer(params_dir)
+    '''
+    Evaluate the pathways network
+    
+    Example paths:
+        $HOME/rest-of-path                 : Env vars are resolved
+        data/pathways_datasets/examples/CS : Relative to project root 
+    
+    @param params_dir: absolute or relative path to directory containing params.json
+    @type params_dir: str
+    '''
+    process = ProjectionAnalyzer(params_dir, proj_root=PROJ_ROOT)
     process.run()
 
 @click.command()
@@ -73,4 +112,10 @@ def run_pagerank(projection_path):
     for score, course_id in scores:
         print(f"{score}:\t {course_id}")
 
+# -------------------- For Testing ------------------
 
+if __name__ == '__main__':
+    #build_dataset('data/pathways_datasets/examples/CS/')
+    
+    #???build_projection('experiments/examples/2008-2018_3000/')
+    build_projection('data/pathways_datasets/examples/CS/')

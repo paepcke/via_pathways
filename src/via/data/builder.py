@@ -12,12 +12,14 @@ class DatasetBuilder(ParamsOperation):
     """
     Given a directory containing a params.json file, generate a sequence matrix.
     """
-    def __init__(self, params_dir):
-        super().__init__(params_dir)
+    def __init__(self, params_dir, proj_root=None):
+        super().__init__(params_dir, proj_root)
 
     def read_pathways(self):
         """
+        Read the enrollment .csv file.
         """
+        
         return pd.read_csv(
             self.pathways_path, names=[
                 "student_id",

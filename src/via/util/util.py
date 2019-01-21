@@ -3,15 +3,23 @@ import json
 import logging
 import re
 
+from ..constants import PROJ_ROOT
 
 class ParamsOperation:
     """
     Superclass for all classes that use params.json files.
     """
-    def __init__(self, params_dir):
+    def __init__(self, params_dir, proj_root=None):
+        
+        params_dir = self.resolve_path(params_dir, proj_root)
+        
+        # Resolve env vars:
         params_path = os.path.join(os.path.realpath(params_dir), "params.json")
+
         with open(params_path) as f:
             params = json.load(f)
+            pathways_path = params['pathways_path']
+            params['pathways_path'] = self.resolve_path(pathways_path)
             self.__dict__.update(params)
             print(params)
         self.dir = params_dir
@@ -24,6 +32,40 @@ class ParamsOperation:
 
     def run(self):
         raise NotImplementedError
+
+    def resolve_path(self, the_path, dir_root=None):
+        '''
+        Given a directory or file path, and an optional origin path.
+        Resolve tilde and environment variables. If the_path
+        is absolute, it is then returned. Else, if dir_root is provided,
+        the return path will be relative to that root. Without
+        a dir_root a relative the_path is resolved relative to
+        the project root, which is available from run.py
+        
+        @param the_path: directory or file path to resolve
+        @type the_path: string
+        @param dir_root: optional diretory root relative to which 
+            relative params_dir values are resolved
+        @type dir_root: str
+        @return resolved file or directory path
+        @rtype: str
+        '''
+        the_path = os.path.expanduser(os.path.expandvars(the_path))
+        if not os.path.isabs(the_path):
+            if dir_root is not None:
+                # Path relative to project root
+                # Resolve env vars, and ~ home directory indicators:
+                dir_root = os.path.expandvars(os.path.expanduser(dir_root))
+                the_path = os.path.realpath(os.path.join(dir_root, the_path))
+            else:
+                # Relative with without a given directory root.
+                # Use project root:
+                the_path = os.path.normpath(os.path.join(PROJ_ROOT, the_path))
+        else:
+            # Path the_path is absolute:
+            the_path = os.path.expandvars(os.path.expanduser(the_path))
+        
+        return the_path
 
 
 def set_logger(log_path, level=logging.INFO, console=True):
@@ -96,3 +138,5 @@ def enrich_projection_txt(projection_dir):
 
 def get_prefix(course_id):
     return course_id[:re.search("\d", course_id).start()]
+
+    

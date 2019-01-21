@@ -1,0 +1,8 @@
+{
+    "null_dataset": false,
+
+    "pathways_path": "src/via/data/raw/ugEnrollmentsGt10PlusMajors.csv",
+    "filters": {
+        "final_major": ["CS"]
+    }
+}

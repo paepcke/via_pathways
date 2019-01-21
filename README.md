@@ -49,7 +49,7 @@ The code implementing the pathways network requires a matrix `M` of shape `(num_
 
 ```build_dataset <params_dir>```
 
-This command assumes that there is a `params.json` file within the directory provided that specifies the type of sequence dataset you would like to generate. The sequence matrix will be saved at `<params_dir>/sequences.npy` and each entry of the dataset will be mapped to course ids in `<params_dir>/course_indices.json`. Example params.json files can be found in the `data/pathways_datasets` directory.
+This command assumes that there is a `params.json` file within the directory provided that specifies the type of sequence dataset you would like to generate. The sequence matrix will be saved at `<params_dir>/sequences.npy` and each entry of the dataset will be mapped to course ids in `<params_dir>/course_indices.json`. Example params.json files can be found in the `data/pathways_datasets/examples` directory. File names in the .json files may be absolute ore relative. If they are relative, they will be computed starting in the util package directory.
 
 ### 2. Create a Pathways Network
 
@@ -57,7 +57,7 @@ Once you have generated a sequence matrix, one can generate a pathways network. 
 
 ```build_projection <params_dir>```
 
-Sample `params.json` files can be found in the `experiments` directory.
+Sample `params.json` files can be found in the `experiments/examples` directory.
 
 ### 3. Prepare Network for Visualization
 

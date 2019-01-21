@@ -7,8 +7,8 @@ import pandas as pd
 import numpy as np
 
 from ..util.util import ParamsOperation
-#import ..model.modules as modules
-from ..model.modules import modules
+import via.model.modules as modules
+#****from ..model.modules import modules
 
 from ..model.projection import ProjectionModel
 
@@ -16,15 +16,17 @@ class Trainer(ParamsOperation):
     """
     Given a matrix of enrollment sequences, generate a model of enrollment flow.
     """
-    def __init__(self, params_dir):
-        super().__init__(params_dir)
-        #self.model = getattr(modules, self.model_class)(**self.model_params)
-        try:
-            model_class = modules[modules.index(self.model_class)]
-        except ValueError:
-            # Requested model for which we have no implementing class:
-            raise ValueError("Model {} is not implemented.".format(self.model_class))
-        self.model = model_class(**self.model_params)
+    def __init__(self, params_dir, proj_root=None):
+        super().__init__(params_dir, proj_root)
+        self.model = getattr(modules, self.model_class)(**self.model_params)
+        #*************
+#         try:
+#             model_class = modules[modules.index(self.model_class)]
+#         except ValueError:
+#             # Requested model for which we have no implementing class:
+#             raise ValueError("Model {} is not implemented.".format(self.model_class))
+#        self.model = model_class(**self.model_params)
+#*************
 
     def apply_filters(self, sequence_matrix, index_to_course):
         """
