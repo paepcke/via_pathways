@@ -105,9 +105,5 @@ venv.bak/
 .project
 .pydevproject
 .env
-data/raw
-data/pathways_datasets/*/*.npy
-data/pathways_datasets/*/*.log
-data/pathways_datasets/*/course_indices.json
-experiments/*/*/*.log
-experiments/*/*/*.txt
+data/
+experiments/
