@@ -18,8 +18,17 @@ class ParamsOperation:
 
         with open(params_path) as f:
             params = json.load(f)
-            pathways_path = params['pathways_path']
-            params['pathways_path'] = self.resolve_path(pathways_path)
+            
+            # Resolve files and directories in the param set.
+            # This is a bad hack! Breaks if we add new file/dir
+            # entries in params.json specs: 
+            pathways_path = params.get('pathways_path', None)
+            if pathways_path is not None:
+                params['pathways_path'] = self.resolve_path(pathways_path)
+            dataset_dir  = params.get('dataset_dir', None)
+            if dataset_dir is not None:
+                params['dataset_dir'] = self.resolve_path(dataset_dir)
+                
             self.__dict__.update(params)
             print(params)
         self.dir = params_dir
@@ -33,7 +42,8 @@ class ParamsOperation:
     def run(self):
         raise NotImplementedError
 
-    def resolve_path(self, the_path, dir_root=None):
+    @staticmethod
+    def resolve_path(the_path, dir_root=None):
         '''
         Given a directory or file path, and an optional origin path.
         Resolve tilde and environment variables. If the_path
@@ -113,6 +123,7 @@ def enrich_projection_txt(projection_dir):
     Utility function purely to prep projections for Cytoscape visualizations.
     """
     newlines = []
+    projection_dir = ParamsOperation.resolve_path(projection_dir)
     with open(os.path.join(projection_dir, 'projection.txt'), "r") as f:
         header = f.readline()
         for line in f:

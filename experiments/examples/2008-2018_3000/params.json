@@ -1,5 +1,5 @@
 {
-    "dataset_dir": "data/pathways_datasets/examples/2008-2018",
+    "dataset_dir": "data/pathways_datasets/examples/CS/",
     "graph_size": 3000,
     "filters": {
         "students": {

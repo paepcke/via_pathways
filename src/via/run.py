@@ -39,7 +39,9 @@ def build_dataset(params_dir):
 def build_projection(params_dir):
     '''
     Generate the sequence matrix dataset: course x course
-    Cell values contain 
+    Cell values contain numbers proportional to probabilities
+    of precedence. (Needs update depending on implementation
+    changes).
     
     Example paths:
         $HOME/rest-of-path                 : Env vars are resolved
@@ -53,8 +55,10 @@ def build_projection(params_dir):
     process.run()
 
 
-@click.command()
-@click.argument('params_dir')
+#************
+#@click.command()
+#@click.argument('params_dir')
+#************
 def run_metrics(params_dir):
     '''
     Evaluate the pathways network
@@ -69,8 +73,10 @@ def run_metrics(params_dir):
     process = ProjectionAnalyzer(params_dir, proj_root=PROJ_ROOT)
     process.run()
 
-@click.command()
-@click.argument('input_path')
+#************
+#@click.command()
+#@click.argument('input_path')
+#************
 def enrich_projection(input_path):
     enrich_projection_txt(input_path)
 
@@ -117,5 +123,9 @@ def run_pagerank(projection_path):
 if __name__ == '__main__':
     #build_dataset('data/pathways_datasets/examples/CS/')
     
-    #???build_projection('experiments/examples/2008-2018_3000/')
-    build_projection('data/pathways_datasets/examples/CS/')
+    #build_projection('experiments/examples/2008-2018_3000/')
+    
+    #enrich_projection('experiments/examples/2008-2018_3000/')
+    
+    run_metrics('experiments/examples/2008-2018_3000/metrics/')
+

@@ -16,7 +16,8 @@ class ProjectionAnalyzer(ParamsOperation):
     """
     def __init__(self, params_dir, proj_root=None):
         super().__init__(params_dir, proj_root)
-
+        
+        params_dir = ParamsOperation.resolve_path(params_dir, proj_root)
         # checks if the metrics folder lives in an existing experiment
         experiment_dir = os.path.dirname(params_dir)
         # workaround to dirname unexpected behavior

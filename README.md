@@ -57,11 +57,11 @@ Once you have generated a sequence matrix, one can generate a pathways network. 
 
 ```build_projection <params_dir>```
 
-Sample `params.json` files can be found in the `experiments/examples` directory.
+Sample `params.json` files can be found in the `experiments/examples` directory. Creates projection.txt.
 
 ### 3. Prepare Network for Visualization
 
-We have been using Cytoscape in order to create the visualizations for our pathways networks. Run the following command in order to create an enriched graph text file:
+We have been using Cytoscape in order to create the visualizations for our pathways networks. Run the following command in order to create an enriched graph text file called projection_enriched.txt:
 
 ```enrich_projection <params_dir>```
 
