@@ -12,12 +12,16 @@ class ProjectionModel:
         assert A.any(), 'Adjacency matrix not initialized.'
         A_copy = np.array(A, copy=True)
         scores = []
-        for i in range(k):
+        i = 0
+        while i < k:
             prev_id, curr_id = np.unravel_index(
                 np.argmax(A_copy), A_copy.shape
             )
             score = A_copy[prev_id][curr_id]
             scores.append([id_to_course[prev_id], id_to_course[curr_id], score])
+            i += 1
+            if i % 1000 == 0:
+                print(f"{i} edges selected...")
             # Set class score to 0 to avoid interference in subsequent iterations
             A_copy[prev_id][curr_id] = 0.0
         return scores

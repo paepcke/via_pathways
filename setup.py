@@ -11,6 +11,7 @@ setuptools.setup(
             'build_projection=via.run:build_projection',
             'run_metrics=via.run:run_metrics',
             'enrich_projection=via.run:enrich_projection',
+            'run_louvain=via.run:run_louvain',
             'run_pagerank=via.run:run_pagerank'
         ]
     },

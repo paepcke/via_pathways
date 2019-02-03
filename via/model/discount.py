@@ -12,15 +12,32 @@ from via.model.projection import ProjectionModel
 class ExponentialDiscount(ProjectionModel):
     def __init__(
         self,
-        gamma=0.9,
+        gamma=0.0
     ):
         super().__init__()
         self.gamma = gamma
 
     def build_projection(self, sequence_matrix):
         num_students, num_classes = sequence_matrix.shape
+        num_timesteps = int(np.max(sequence_matrix))
+
+        # adapts model parameter gamma to given instance of sequence matrix
+        if type(self.gamma) == float:
+            sequence_gamma = np.array(
+                # avoids concurrent enrollment
+                [0] + [self.gamma**t for t in range(num_timesteps-1)]
+            )
+        elif type(self.gamma) == list:
+            sequence_gamma = np.array(
+                self.gamma + [0] * (num_timesteps - len(self.gamma))
+            )
+        else:
+            raise TypeError
+
+        print(sequence_gamma)
+
         # class_scores[i][j] keeps track of time-normalized frequency of class i to j
-        A = np.zeros((num_classes, num_classes))
+        A = np.zeros((num_classes, num_classes, num_timesteps)).astype(np.float)
 
         for i in range(num_students):
             if i % 1000 == 0:
@@ -35,6 +52,8 @@ class ExponentialDiscount(ProjectionModel):
             sequence = sorted(sequence, key=lambda x: x[0], reverse=True)
             for j in range(len(sequence)):
                 curr_t, curr_class_idx = sequence[j]
+                # if curr_t == 1:
+                #     A[-1][curr_class_idx][1] += 1
                 # Move down the list by index
                 for prev_t, prev_class_idx in sequence[j:]:
                     # To facilitate indexing
@@ -43,29 +62,25 @@ class ExponentialDiscount(ProjectionModel):
 
                     # Amount of time between course enrollment
                     distance = curr_t - prev_t
-                    if prev_t < curr_t:
-                        # Exponentially decreasing reward as distance increases
-                        A[prev_class_idx][curr_class_idx] += (
-                            self.gamma ** (distance - 1))
-                        # Exponentially increasing penalty as distance increases
-                        # A[curr_class_idx][prev_class_idx] -= (
-                        #     self.gamma ** (distance - 1))
+                    A[prev_class_idx][curr_class_idx][distance] += 1
+
+        A = A * sequence_gamma
+        A = np.sum(A, axis=2)
         return A
 
 
 class ExponentialDiscountNormalized(ExponentialDiscount):
     def __init__(
         self,
-        gamma=0.9,
+        gamma=0.0
     ):
-        super().__init__()
-        self.gamma = gamma
+        super().__init__(gamma)
 
     def build_projection(self, sequence_matrix):
         """
 
         """
-        A = super().build_projection(sequence_matrix)
+        A = super().build_projection(sequence_matrix, gamma)
 
         # remove reverse prerequisite relationships
         A[A < 0] = 0.0
@@ -95,21 +110,19 @@ class ExponentialDiscountConditional(ExponentialDiscount):
     """
     def __init__(
         self,
-        gamma=0.9,
+        gamma=0.0,
         p_cutoff=0.0
     ):
-        super().__init__()
-        self.gamma = gamma
+        super().__init__(gamma)
         self.course_p = None
 
     def build_projection(self, sequence_matrix):
         """
         """
         A = super().build_projection(sequence_matrix)
-        course_counts = np.count_nonzero(sequence_matrix, axis=0)
+        course_counts = np.count_nonzero(sequence_matrix, axis=0).reshape(-1, 1)
         self.calculate_course_probs(sequence_matrix)
-
-        A = np.divide(A, course_counts.reshape(-1, 1), out=np.zeros_like(A), where=course_counts != 0)
+        A = np.divide(A, course_counts, out=np.zeros_like(A), where=course_counts != 0)
         return A
 
     def calculate_course_probs(self, sequence_matrix):
@@ -129,10 +142,9 @@ class ExponentialDiscountJoint(ExponentialDiscount):
     """
     def __init__(
         self,
-        gamma=0.9,
+        gamma=0.0
     ):
-        super().__init__()
-        self.gamma = gamma
+        super().__init__(gamma)
 
     def build_projection(self, sequence_matrix):
         """

@@ -3,5 +3,6 @@
     "python.linting.flake8Args": [
         "--disable-msg",
         "E501",
-    ]
+    ],
+    "python.pythonPath": ".env/bin/python"
 }

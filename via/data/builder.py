@@ -32,13 +32,13 @@ class DatasetBuilder(ParamsOperation):
 
     def apply_canceling_filters(self, df):
         logging.info('Applying filters...')
+        mask = pd.Series([True]*len(df))
         for key, arr in self.filters.items():
             if key not in df:
                 continue
-            mask = pd.Series([False]*df[key].size)
             for el in arr:
-                mask = mask | df[key].str.contains(el)
-            df = df[mask]
+                mask = mask & df[key].str.contains(el)
+        df = df[mask]
         return df
 
     def run(self):
@@ -66,10 +66,18 @@ class DatasetBuilder(ParamsOperation):
         """
         df = self.read_pathways()
         if self.filters:
+            logging.info('Applying filters...')
+            # mask = pd.Series([False]*len(df))
+            # mask = mask | df['curr_major'].str.contains('CS')
+            # mask = mask & ~df['final_major'].str.contains('CS')
+            # mask = mask & df['final_major'].str.contains('SYMBO')
+            # df = df[mask]
             df = self.apply_canceling_filters(df)
 
         student_list = df['student_id'].unique()
-        course_list = sorted(df['course_id'].unique())
+        course_list = sorted(
+            ['<BEGIN>'] + list(df['course_id'].unique()) + ['<END>']
+        )
         course_to_index = {j: i for i, j in enumerate(course_list)}
 
         num_students = len(student_list)
@@ -84,13 +92,17 @@ class DatasetBuilder(ParamsOperation):
         for name, group in df_grouped:
             if student_counter % 1000 == 0:
                 print(f'{student_counter} students processed.')
-            courses_unique = group.drop_duplicates(subset='course_id')
+            courses_unique = group.drop_duplicates(subset=['course_id', 'dropped'])
             courses_completed = courses_unique.loc[courses_unique['dropped'] == 0]
             courses_completed = courses_completed.sort_values('quarter_id')
 
             quarter_grouped = courses_completed.groupby('quarter_id')
             timestep = 1  # Timestep intialized at 1
+            # Add <BEGIN> tag to mark start of sequence
+            sequence_matrix[student_counter,
+                            course_to_index['<BEGIN>']] = timestep
             for quarter, group in quarter_grouped:
+                timestep += 1
                 if 'min_quarter_id' in self.filters and quarter < self.filters['min_quarter_id']:
                     continue
                 if 'max_quarter_id' in self.filters and quarter > self.filters['max_quarter_id']:
@@ -103,8 +115,9 @@ class DatasetBuilder(ParamsOperation):
                     curr_course_index = course_to_index[row['course_id']]
                     sequence_matrix[student_counter,
                                     curr_course_index] = timestep
-                timestep += 1
-
+            # Add <END> tag to mark end of sequence
+            sequence_matrix[student_counter,
+                            course_to_index['<END>']] = timestep + 1
             # Updating the current student we are extracting info for
             student_counter += 1
         return sequence_matrix, course_to_index

@@ -117,6 +117,11 @@ class Trainer(ParamsOperation):
         df = pd.DataFrame(
             edges, columns=['# prerequisite', 'course', 'score']
         )
+        enrollment_counts = list(np.count_nonzero(sequence_matrix, axis=0)) + [sum(A[-1])]
+        for index, row in df.iterrows():
+                df.loc[index, 'count_prereq'] = enrollment_counts[course_to_index[df.loc[index, '# prerequisite']]]
+                df.loc[index, 'count_course'] = enrollment_counts[course_to_index[df.loc[index, 'course']]]
+
         # Additional information on the prerequisite course probability p(i)
         if self.model_class == 'ExponentialDiscountConditional':
             probs = self.model.get_course_probs(sequence_matrix)

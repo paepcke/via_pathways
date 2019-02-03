@@ -81,10 +81,16 @@ def enrich_projection_txt(projection_dir):
             else:
                 src_p = 1.0
                 dst_p = 1.0
-            idx = re.search("\d", attrs[0]).start()
-            newsrc = attrs[0][:idx]
-            idx = re.search("\d", attrs[1]).start()
-            newdst = attrs[1][:idx]
+            if attrs[0] not in {'<BEGIN>', '<END>'}:
+                idx = re.search("\d", attrs[0]).start()
+                newsrc = attrs[0][:idx]
+            else:
+                newsrc = 'special'
+            if attrs[1] not in {'<BEGIN>', '<END>'}:
+                idx = re.search("\d", attrs[1]).start()
+                newdst = attrs[1][:idx]
+            else:
+                newdst = 'special'
             is_internal = 'internal' if newsrc == newdst else 'external'
             newlines.append(
                 '\t'.join(
@@ -101,4 +107,6 @@ def enrich_projection_txt(projection_dir):
 
 
 def get_prefix(course_id):
-    return course_id[:re.search("\d", course_id).start()]
+    if course_id not in {'<BEGIN>', '<END>'}:
+        return course_id[:re.search("\d", course_id).start()]
+    return 'special'

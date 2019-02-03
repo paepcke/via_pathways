@@ -3,6 +3,8 @@ import logging
 import json
 from collections import Counter
 
+from scipy.stats import zscore
+import numpy as np
 import networkx as nx
 from networkx.algorithms.community.quality import modularity as nx_modularity
 from networkx.algorithms.cluster import clustering
@@ -33,16 +35,98 @@ class ProjectionAnalyzer(ParamsOperation):
             ), '"metric_fns" key not found in metrics/params.json'
             self.__dict__.update(params)
 
-        self.g = nx.read_weighted_edgelist(
-            projection_path, create_using=nx.DiGraph)
+        self.g = nx.read_edgelist(
+            os.path.join(experiment_dir, 'projection.txt'),
+            create_using=nx.DiGraph, data=[
+                ('weight', float), ('count_prereq', float), ('count_course', float)])  # ('weight', float), ('p_prereq', float), ('p_course', float)])  #
         self.department_clusters = None
 
     def run(self):
         results = {}
-        for metric_fn, kwargs in self.metric_fns:
-            results[metric_fn] = getattr(metrics, metric_fn)(**kwargs)
-        with open(os.path.join(self.dir, 'metrics.json'), 'w') as f:
+        for metric_fn, kwargs in self.metric_fns.items():
+            results[metric_fn] = getattr(self, metric_fn)(**kwargs)
+        with open(os.path.join(self.dir, 'metrics/metrics.json'), 'w') as f:
             json.dump(results, f, indent=4)
+
+    def stopgap_nodes(self, department=''):
+        department_node_ids = [
+            node for node in self.g.nodes if department == get_prefix(node)
+        ]
+
+        res = []
+        for node_id in department_node_ids:
+            print(node_id)
+            # out degree leading into the department
+            out_degree_internal = sum(
+                [
+                    i[2] for i in nx.edge_boundary(self.g, [node_id], department_node_ids, data='weight')
+                ]
+            )
+            sample_edges = [edge for edge in self.g.edges if edge[1] == node_id]
+            if len(sample_edges) == 0:
+                continue
+            sample_edge = sample_edges[0]
+            count = self.g.get_edge_data(sample_edge[0], sample_edge[1])[
+                'count_course']
+
+            if out_degree_internal == 0:
+                out_degree_internal = 1
+            print(f"{int(out_degree_internal)} total {department} courses enrolled by {int(count)} students after course {node_id}")
+            coeff = out_degree_internal / count
+            res.append((node_id, coeff))
+
+        res = sorted(
+            res, key=lambda x: x[1], reverse=True
+        )[:self.top_k]
+        return res
+
+    def target_out_degree(self, src_department='', dst_department=''):
+        # all edges that leave src_department but do not enter dst_department
+        ext_edges = {
+            edge: self.g.get_edge_data(edge[0], edge[1]) for edge in self.g.edges
+            if src_department in edge[0] and dst_department not in edge[1]
+        }
+
+        src_nodes = [node for node in self.g.nodes if src_department in node]
+        out = self.g.out_degree(src_nodes)
+        out_weighted = self.g.out_degree(src_nodes, weight='weight')
+
+        res = []
+        for node_id in src_nodes:
+
+            ext_data = {
+                edge: attrs for edge, attrs in ext_edges.items()
+                if edge[0] == node_id
+            }
+            ext_degree = len(ext_data.keys())
+            ext_weight = sum([attrs['weight'] for attrs in ext_data.values()])
+            sample_edge = [
+                edge for edge in self.g.edges if edge[0] == node_id
+            ]
+
+            if len(sample_edge) != 0:
+                node_p = self.g.get_edge_data(
+                    sample_edge[0][0], sample_edge[0][1]
+                )['p_prereq']
+            else:
+                sample_edge = [
+                    edge for edge in self.g.edges if edge[1] == node_id
+                ]
+                node_p = self.g.get_edge_data(
+                    sample_edge[0][0], sample_edge[0][1]
+                )['p_course']
+
+            if (out[node_id] - ext_degree == 0):
+                continue
+
+            avg_degree = (out_weighted[node_id] - ext_weight) / \
+                (out[node_id] - ext_degree)
+
+            res.append((node_id, avg_degree, node_p))
+        res = sorted(
+            res, key=lambda x: x[1], reverse=True
+        )[:self.top_k]
+        return res
 
     def num_courses(self):
         res = Counter([get_prefix(course) for course in self.g.nodes])
@@ -62,7 +146,7 @@ class ProjectionAnalyzer(ParamsOperation):
 
         res = []
         for department, cluster in self.department_clusters.items():
-            g2 = set(g.nodes).remove(cluster)
+            g2 = {i for i in g.nodes if i not in cluster}
             res.append((department, nx_modularity(g, [cluster, g2])))
 
         res = sorted(
@@ -95,8 +179,11 @@ class ProjectionAnalyzer(ParamsOperation):
         else:
             g = self.g
 
+        if not self.department_clusters:
+            self.extract_departments()
+
         res = []
-        for department, cluster in self.department_clusters:
+        for department, cluster in self.department_clusters.items():
             nodes = sorted(list(cluster))
             for node in nodes[1:]:
                 g = nx.contracted_nodes(g, nodes[0], node, self_loops=False)
@@ -112,8 +199,11 @@ class ProjectionAnalyzer(ParamsOperation):
         else:
             g = self.g
 
+        if not self.department_clusters:
+            self.extract_departments()
+
         res = []
-        for department, cluster in self.department_clusters:
+        for department, cluster in self.department_clusters.items():
             nodes = sorted(list(cluster))
             for node in nodes[1:]:
                 g = nx.contracted_nodes(g, nodes[0], node, self_loops=False)
@@ -129,8 +219,11 @@ class ProjectionAnalyzer(ParamsOperation):
         else:
             g = self.g
 
+        if not self.department_clusters:
+            self.extract_departments()
+
         res = []
-        for department, cluster in self.department_clusters:
+        for department, cluster in self.department_clusters.items():
             nodes = sorted(list(cluster))
             for node in nodes[1:]:
                 g = nx.contracted_nodes(g, nodes[0], node, self_loops=True)
@@ -144,6 +237,7 @@ class ProjectionAnalyzer(ParamsOperation):
         print("subgraph_motifs not implemented. Skipping.")
 
     def extract_departments(self):
+        self.department_clusters = dict()
         prefixes = {get_prefix(course) for course in self.g.nodes}
         for prefix in prefixes:
             cluster = {
